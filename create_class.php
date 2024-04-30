@@ -4,18 +4,34 @@ require 'headquarters.php';
 
 // Start or resume session
 session_start();
-
-// Check if Headquarters object is stored in session
-if (!isset($_SESSION['headquarters'])) {
+$personalNumber = 100;
+// Check if personalNumber is stored in session
+if (!isset($_SESSION['personalNumber'])) {
+    echo "Warning - no personalNumber found.";
+    // If not, redirect the user to the login page
+    //header("Location: login.php?error=nonumber");
+    //exit; // Ensure that no further code is executed after the redirection
+}
+else{
+// Retrieve personalNumber from session
+$personalNumber = $_SESSION['personalNumber'];
+}
+// Check if Headquarters object is stored in session based on personalNumber
+if (!isset($_SESSION['hq_object'])) {
+    echo "Warning - no HQ object found!<br>";
     // If not, create a new Headquarters object and store it in session
-    $_SESSION['headquarters'] = new Headquarters();
+    $_SESSION['hq_object'] = new Headquarters($personalNumber); // Pass personalNumber to Headquarters constructor if needed
 }
 
 // Retrieve existing Headquarters object from session
-$hq = $_SESSION['headquarters'];
+$hq = $_SESSION['hq_object'];
 
 // Check if form is submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $hq_number = $_POST['hq_number'];
+    $hq_pw = $_POST['hq_pw'];    
+    $loginResult = intval($hq->verifyLogin($hq_number, $hq_pw));
+    if($loginResult){
     // Retrieve form data
     $className = $_POST['class_name'];
     $commanderNumber = $_POST['commander_number'];
@@ -59,6 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
     }
+
+    }
+    else {
+        echo "Confirmation data incorrect.";
+    }
 }
 
 ?>
@@ -74,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php if (isset($errorMessage)) : ?>
         <p style="color: red;"><?php echo $errorMessage; ?></p>
     <?php endif; ?>
-<form action="create_class.php" method="post" autocomplete="on">
+<form action="#" method="post" autocomplete="on">
     <label>Class Name:
         <input type="text" name="class_name" class="form-control" required>
     </label><br><br>
@@ -90,7 +111,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label>Soldier <?= $i + 1 ?> Personal Number:
             <input type="text" name="soldier_number_<?= $i ?>" class="form-control">
         </label><br><br>
-    <?php endfor; ?>
+    <?php endfor; ?> 
+
+        <h4>Confirm admin data to perform action.</h4>
+        <label for="pakal">Personal Number:</label><br>
+        <input type="text" id="hq_number" name="hq_number" required><br><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="hq_pw" name="hq_pw" required><br><br>
 
     <input type="submit" class="form-control-bar" id="form_submit_btn" value="Submit New Class">               
 </form>

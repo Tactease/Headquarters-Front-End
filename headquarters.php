@@ -12,14 +12,23 @@ define('CLASS_NONE', 0);
 
 class Headquarters
 {
+    private $personalNumber; //personal number for session control
     private $db; // MongoDB database instance
     private $classesCollection; // MongoDB collection for classes
     private $soldiersCollection; // MongoDB collection for classes
+    private $adminsCollection; // MongoDB collection for admins
     private $used_encrypt;
     private $currently_selected_classId;
 
-    public function __construct()
+    public function __construct($inputNumber)
     {
+        // Set $personalNumber to null by default
+        $personalNumber = null;
+
+        // Check if $inputNumber is provided and not null
+        if ($inputNumber !== null) {
+            $personalNumber = $inputNumber;
+        }
         // Start or resume session
         session_start();
 
@@ -34,14 +43,17 @@ class Headquarters
             $this->db = $headquarters->db;
             $this->classesCollection = $headquarters->classesCollection;
             $this->soldiersCollection = $headquarters->soldiersCollection;
+            $this->adminsCollection = $headquarters->adminsCollection;
         }
+        // Make sure this is set to 'DB_CONNECT' when deploy!!!
         $dbConnectionString = $_ENV['DB_CONNECT'];
-        // Connect to MongoDB (REPLACE with link to actual DB)
+        // Connect to MongoDB
         $mongoClient = new MongoClient($dbConnectionString);
         // select Database in MDB
         $this->db = $mongoClient->selectDatabase('Tactease');
         $this->classesCollection = $this->db->selectCollection('classes');
         $this->soldiersCollection = $this->db->selectCollection('soldiers');
+        $this->adminsCollection = $this->db->selectCollection('admins');
         $this->currently_selected_classId = CLASS_NONE;
         // GLOBAL ENCRYPTION METHOD - select encryption method to be used everywhere here
         // When global encryption method is decided - implement it in encrypt function and put its name here.
@@ -90,6 +102,29 @@ class Headquarters
 		// Compare hashed or encrypted passwords
 		return $encryptedInputPassword === $storedPassword;
 	}
+    public function verifyLogin($inputNumber, $inputPassword)
+    {
+        $intNumber = (int) $inputNumber;
+        $adminsCollection = $this->db->selectCollection('soldiers');
+    
+        try {
+            // Retrieve the admin document based on the input personalNumber
+            $admin = $adminsCollection->findOne(['personalNumber' => $intNumber]);
+    
+            if ($admin && isset($admin['isAdmin']) && $admin['isAdmin'] && password_verify($inputPassword, $admin['password'])) {
+                // Password is correct
+                return 1;
+            } else {
+                // Password is incorrect or admin not found
+                return 0;
+            }
+        } catch (\Exception $e) {
+            // Handle any exceptions that occur during database operation
+            // For example, log the error or display an error message
+            error_log('Error verifying login: ' . $e->getMessage());
+            return 0;
+        }
+    }
     #Generate ID for class
     private function generateUniqueClassId()
     {
@@ -110,33 +145,43 @@ class Headquarters
 
     return $classId;
     }
-    #get existing classes in the collection.
-    public function getExistingClasses()
+    //get existing classes in the soldiers collection.
+    public function getUniqueClasses()
     {
-    // Select the classes collection from the MongoDB database
-    $classesCollection = $this->classesCollection;
+        // Array to store unique depClass combinations
+        $uniqueClasses = [];
     
-    // Retrieve all documents (classes) from the collection
-    $classesCursor = $classesCollection->find();
-
-    // Initialize an array to store the existing classes
-    $existingClasses = [];
-
-    // Iterate over the cursor to extract class information
-    foreach ($classesCursor as $class) {
-        // Extract class ID and name from the document
-        $classId = $class['classId'];
-        $className = $class['name'];
-
-        // Add class information to the array
-        $existingClasses[] = [
-            'classId' => $classId,
-            'className' => $className
-        ];
-    }
-
-    // Return the array of existing classes
-    return $existingClasses;
+        // Retrieve soldiers collection
+        $soldiersCollection = $this->db->selectCollection('soldiers');
+    
+        // Find distinct depClass combinations
+        $distinctClasses = $soldiersCollection->distinct('depClass');
+    
+        // Iterate through distinct classes and parse classId and className
+        foreach ($distinctClasses as $class) {
+            // Parse classId and className from depClass object
+            $classId = $class['classId'];
+            $className = $class['className'];
+    
+            // Check if the combination already exists in uniqueClasses array
+            $exists = false;
+            foreach ($uniqueClasses as $uniqueClass) {
+                if ($uniqueClass['classId'] == $classId && $uniqueClass['className'] == $className) {
+                    $exists = true;
+                    break;
+                }
+            }
+    
+            // If the combination doesn't exist, add it to uniqueClasses array
+            if (!$exists) {
+                $uniqueClasses[] = [
+                    'classId' => $classId,
+                    'className' => $className
+                ];
+            }
+        }
+    
+        return $uniqueClasses;
     }
 
     public function getExistingSoldiers()
@@ -189,42 +234,16 @@ class Headquarters
         $soldiersCollection = $this->db->selectCollection('soldiers');
         
         // Retrieve soldier's name based on _id
-        $soldier = $soldiersCollection->findOne(['_id' => new MongoObjectID($soldierId)]);
+        $soldier = $soldiersCollection->findOne(['_id' => $soldierId]);
         $soldierName = $soldier['fullName']; // Assuming 'fullName' field stores the soldier's name
         
         // Call JavaScript function to confirm deletion
         $this->confirmDelete($soldierName, $soldierId);
     }
 
-    // Function to DELETE soldier document from MongoDB collection
-    // private function deleteSoldierFromCollection($soldierId)
-    // {
-    //     $soldiersCollection = $this->db->selectCollection('soldiers');
-        
-    //     // Retrieve soldier's name based on _id
-    //     $soldier = $soldiersCollection->findOne(['_id' => new MongoObjectID($soldierId)]);
-    //     $soldierName = $soldier['fullName']; // Assuming 'fullName' field stores the soldier's name
-        
-    //     // Confirm deletion
-    //     echo "Are you sure want to delete soldier named $soldierName? (yes/no): ";
-    //     $confirmation = strtolower(trim(readline()));
-
-    //     // Perform deletion if confirmed
-    //     if ($confirmation === 'yes') {
-    //         $result = $soldiersCollection->deleteOne(['_id' => new MongoObjectID($soldierId)]);
-    //         if ($result->getDeletedCount() === 1) {
-    //             echo "Soldier deleted successfully!\n";
-    //         } else {
-    //             echo "Failed to delete soldier.\n";
-    //         }
-    //     } else {
-    //         echo "The soldier named $soldierName was NOT deleted.\n";
-    //     }
-    // }
-
 	//Lock account for given amout of seconds
 	private function lockout_seconds($lock_minutes){
-		//TODO implement lockout logic;
+		// implement lockout logic;
 	}
     
     // MAIN FUNCTIONS
@@ -233,26 +252,16 @@ class Headquarters
     {
         $soldiersCollection = $this->db->selectCollection('soldiers');
     
-    
         // Check if soldier already exists
         if ($this->soldierExists($personalNumber)) {
             echo "Error: Soldier with personal number $personalNumber already exists in the system.\n";
             return;
         }
-    
-        // Ask for soldier's full name and pakal
-        #$fullName = readline("Enter soldier's full name: ");
-        #$pakal = readline("Enter soldier's pakal: ");
-    
-        // Ask for the password
-        #$rawPassword = readline("Enter soldier's password: ");
-        // Ask for encryption method
-        #$encryptionMethod = readline("Enter encryption method (e.g., md5, sha256): ");
-        // OPTIONAL - use global method set in constructor - use when global method will be determined
-        $encryptionMethod = $this->used_encrypt;
+
+        //$encryptionMethod = $this->used_encrypt;
 
         // Encrypt the password
-        $encryptedPassword = $this->encrypt($password, $encryptionMethod);
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
         // Create soldier document
         $soldierDocument = [
@@ -261,7 +270,7 @@ class Headquarters
             'pakal' => $pakal,
             'requestList' => [], // Empty request list for new soldier
             'depClass' => null, // No class assigned initially
-            'password' => $encryptedPassword // Encrypted password
+            'password' => $hashedPassword // Encrypted password
         ];
 
         // Insert soldier document into MongoDB collection
@@ -269,19 +278,39 @@ class Headquarters
         $soldiersCollection->insertOne($soldierDocument);
         echo "Soldier created successfully!\n";
     }
-    #create a class with soldiers
+    public function createAdmin($personalNumber, $fullName, $pakal, $password)
+    {
+    
+        // Check if soldier already exists
+        if ($this->soldierExists($personalNumber)) {
+            echo "Error: Soldier with personal number $personalNumber already exists in the system.\n";
+            return;
+        }
+
+        // Encrypt the password
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        // Create soldier document
+        $adminDocument = [
+            'personalNumber' => intval($personalNumber),
+            'fullName' => $fullName,
+            'pakal' => $pakal,
+            'requestList' => [], // Empty request list for new soldier
+            'depClass' => null, // No class assigned initially
+            'password' => $hashedPassword, // Encrypted password
+            'isAdmin' => true
+        ];
+
+        // Insert soldier document into MongoDB collection
+        $adminsCollection = $this->db->selectCollection('soldiers');
+        $adminsCollection->insertOne($adminDocument);
+        echo "Admin created successfully!\n";
+    }
+    // create a class - add to given soldiers
     public function createClass($className, $commanderNumber, $soldiers, $numSoldiers)
     {
         // Generate a unique classId for the class
         $classId = $this->generateUniqueClassId();
-    
-        // Save the class to the MongoDB collection
-        $this->classesCollection->insertOne([
-            'classId' => $classId,
-            'name' => $className,
-            'commander_number' => $commanderNumber,
-            'soldiers' => $soldiers
-        ]);
     
         // Update the depClass field for each soldier
         $soldiersCollection = $this->db->selectCollection('soldiers');
@@ -297,67 +326,53 @@ class Headquarters
             }
     
             // Update soldier's class information
-            $soldier['depClass'] = [
+            $depClass = [
                 'classId' => $classId,
                 'className' => $className
             ];
     
             // Update soldier document in the collection
-            $soldiersCollection->replaceOne(['_id' => $soldier['_id']], $soldier);
+            $updateResult = $soldiersCollection->updateOne(
+                ['personalNumber' => intval($soldierNumber)],
+                ['$set' => ['depClass' => $depClass]]
+            );
+    
+            // Check if the update was successful
+            if ($updateResult->getModifiedCount() > 0) {
+                echo "Class information updated for soldier with personal number $soldierNumber\n";
+            } else {
+                echo "Error updating class information for soldier with personal number $soldierNumber\n";
+            }
         }
-
-        $commander = $soldiersCollection->findOne(['commander' => intval($soldierNumber)]);
     
         echo "Class saved successfully!\n";
     }
-
-    public function removeClass()
+    //remove class from soldier
+    public function removeClass($removeClassName, $removeClassId)
     {
-        // Ask for class name
-        $className = readline("Enter the class name: ");
-
-        // Search for the class
-        $class = $this->classesCollection->findOne(['name' => $className]);
-
-        // If class doesn't exist, ask for input again
-        if (!$class) {
-            echo "Error: Class '$className' not found.\n";
-            return;
-        }
-
-        // Ask for commander's personal number
-        $commanderNumber = readline("Enter the commander's personal number: ");
-
-        // If commander's personal number doesn't match, ask for input again
-        if ($class['commander_number'] !== $commanderNumber) {
-            echo "Error: Commander's personal number does not match.\n";
-            return;
-        }
-
-        // Check if all soldiers in the class exist
-        foreach ($class['soldiers'] as $soldierNumber) {
-            if (!$this->soldierExists($soldierNumber)) {
-                echo "Error: Soldier with personal number $soldierNumber doesn't exist in the system.\n";
-                return;
+        // Update the depClass field for each soldier
+        $soldiersCollection = $this->db->selectCollection('soldiers');
+    
+        // Find all soldiers with the specified class to remove
+        $soldiersWithClass = $soldiersCollection->find(['depClass.classId' => $removeClassId, 'depClass.className' => $removeClassName]);
+    
+        foreach ($soldiersWithClass as $soldier) {
+            // Update soldier's depClass to null or safe default value
+            $updateResult = $soldiersCollection->updateOne(
+                ['_id' => $soldier['_id']],
+                ['$unset' => ['depClass' => '']]
+            );
+    
+            // Check if the update was successful
+            if ($updateResult->getModifiedCount() > 0) {
+                echo "Class removed for soldier with personal number {$soldier['personalNumber']}\n";
+            } else {
+                echo "Error removing class for soldier with personal number {$soldier['personalNumber']}\n";
             }
         }
-
-        // Confirm class removal
-        $confirmation = readline("Are you sure want to remove class '$className'? (yes/no): ");
-        if ($confirmation !== 'yes') {
-            echo "Class removal aborted.\n";
-            return;
-        }
-
-        // Remove class from soldiers' data
-        foreach ($class['soldiers'] as $soldierNumber) {
-            $this->updateSoldierClass($soldierNumber, null, null);
-        }
-
-        // Remove class from the DB
-        $this->classesCollection->deleteOne(['name' => $className]);
-        echo "Class '$className' removed successfully!\n";
-    	}
+    
+        echo "Class $removeClassName removed from all soldiers successfully!\n";
+    }
 
         // Update or delete soldier's account
         public function updateAccount()
@@ -509,16 +524,33 @@ class Headquarters
 			return $password;
 		}
 
-        //Select a class (for the ShowMainPage function)
+        //Select a class and set it as the currently selected class
         public function selectClass($classId)
         {
-            // Ask the user to input the class ID
-            //$classId = readline("Enter the class ID: ");
-    
             // Set the currently selected class ID
             $this->currently_selected_classId = $classId;
-    
+
             echo "Class ID $classId selected.\n";
+        }
+
+        //Update a class
+        public function updateClass($classId, $newName)
+        {
+            // Retrieve the soldiers collection
+            $soldiersCollection = $this->db->selectCollection('soldiers');
+            
+            // Update soldiers with matching classId in their depClass
+            $updateResult = $soldiersCollection->updateMany(
+                ['depClass.classId' => $classId],
+                ['$set' => ['depClass.className' => $newName]]
+            );
+            
+            // Check if any documents were modified
+            if ($updateResult->getModifiedCount() > 0) {
+                echo "Successfully updated className for soldiers with classId $classId to $newName.\n";
+            } else {
+                echo "No soldiers found with classId $classId.\n";
+            }
         }
 
         //Show main page
@@ -564,7 +596,8 @@ class Headquarters
             echo "<br>";
             echo "<a href='create_class.php'>Create a Class</a><br>";
             echo "<a href='create_account.php'>Create a New Account</a><br>";
-            echo "<a href='update_class_get.php'>Update a Class</a><br>";
+            echo "<a href='update_class.php'>Update a Class</a><br>";
+            echo "<a href='create_account_admin.php'>Create a New Account - Admin</a><br>";
         }
 }
 

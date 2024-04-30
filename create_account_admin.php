@@ -45,14 +45,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $errorMessage = "Error: Personal number must be a number.";
     } else {
         // Call createSoldier method to create a new soldier
-        $hq->createSoldier($personalNumber, $fullName, $pakal, $password);
-        echo "Soldier created successfully!";
+        $hq->createAdmin($personalNumber, $fullName, $pakal, $password);
+        echo "Admin created successfully!";
     }
 
     }
     else {
         echo "Confirmation data incorrect.";
     }
+    
 }
 
 ?>
@@ -62,10 +63,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account</title>
+    <title>Create Admin Account</title>
 </head>
 <body>
-    <h1>Create Account</h1>
+    <h1>Create Admin Account</h1>
     <?php if (isset($errorMessage)) : ?>
         <p style="color: red;"><?php echo $errorMessage; ?></p>
     <?php endif; ?>
@@ -77,13 +78,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <label for="pakal">Pakal:</label><br>
         <input type="text" id="pakal" name="pakal" required><br><br>
         <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password" required><br><br>        
+        <input type="password" id="password" name="password" required><br><br>
         <h4>Confirm admin data to perform action.</h4>
         <label for="pakal">Personal Number:</label><br>
         <input type="text" id="hq_number" name="hq_number" required><br><br>
         <label for="password">Password:</label><br>
         <input type="password" id="hq_pw" name="hq_pw" required><br><br>
-        <input type="submit" value="Create Account">
+        <input type="submit" value="Create Admin Account">
     </form>
     <a href='index.php'>Back to main page</a><br>
 </body>

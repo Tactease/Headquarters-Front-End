@@ -5,14 +5,26 @@ require 'headquarters.php';
 // Start or resume session
 session_start();
 
-// Check if Headquarters object is stored in session
-if (!isset($_SESSION['headquarters'])) {
+// Check if personalNumber is stored in session
+if (!isset($_SESSION['personalNumber'])) {
+    echo "Warning - no personalNumber found.";
+    // If not, redirect the user to the login page
+    //header("Location: login.php?error=nonumber");
+    //exit; // Ensure that no further code is executed after the redirection
+}
+
+// Retrieve personalNumber from session
+$personalNumber = $_SESSION['personalNumber'];
+
+// Check if Headquarters object is stored in session based on personalNumber
+if (!isset($_SESSION['hq_object'])) {
+    echo "Warning - no HQ object found!<br>";
     // If not, create a new Headquarters object and store it in session
-    $_SESSION['headquarters'] = new Headquarters();
+    $_SESSION['hq_object'] = new Headquarters($personalNumber); // Pass personalNumber to Headquarters constructor if needed
 }
 
 // Retrieve existing Headquarters object from session
-$hq = $_SESSION['headquarters'];
+$hq = $_SESSION['hq_object'];
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -50,22 +62,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <h1>Select Class</h1>
     
     <!-- Existing classes form -->
-    <form action="index.php" method="get">
+    <form action="" method="post">
         <label for="classId">Enter Class ID:</label><br>
         <input type="number" id="classId" name="classId" class="form-control" required><br><br>
-        <input type="submit" class="form-control-bar" value="Select Class">
+        <input type="submit" class="form-control-bar" value="Select Class"><br>
     </form>
-
-    <!-- Collapsible list of existing classes -->
+    <a href='index.php'>Back to Main Page</a><br>
+    <!-- list of existing classes -->
     <h3>Existing Classes</h3>
-        <?php
-        // Retrieve existing classes from the headquarters object
-        $currentClasses = $hq->getExistingClasses();
-        // Display each class in the list
-        foreach ($currentClasses as $class) {
-            echo "<p>Class ID: {$class['classId']} - Name: {$class['className']}</p>";
-        }
-        ?>
+    <?php
+    // Retrieve unique depClass combinations from the headquarters object
+    $uniqueClasses = $hq->getUniqueClasses();
+
+    // Display each unique class in the list
+    foreach ($uniqueClasses as $class) {
+        echo "<p>Class ID: {$class['classId']} - Name: {$class['className']}</p>";
+    }
+    ?>
 
     <script src="scripts.js"></script>
 </body>
