@@ -1,30 +1,30 @@
 <?php
-// Include the headquarters.php file to access the Headquarters class
+session_start();
+include "config.php";
 require 'headquarters.php';
 
-// Start or resume session
-session_start();
-$personalNumber = 100;
 // Check if personalNumber is stored in session
-if (!isset($_SESSION['personalNumber'])) {
-    echo "Warning - no personalNumber found.";
+if (!isset($_SESSION["user_id"])) {
     // If not, redirect the user to the login page
-    //header("Location: login.php?error=nonumber");
-    //exit; // Ensure that no further code is executed after the redirection
+    header("Location: login.php?error=noid");
+    exit; // Ensure that no further code is executed after the redirection
 }
-else{
-    // Retrieve personalNumber from session
-$personalNumber = $_SESSION['personalNumber'];
-}
+// Retrieve personalNumber from session
+$personalNumber = $_SESSION["user_id"];
+
 // Check if Headquarters object is stored in session based on personalNumber
-if (!isset($_SESSION['hq_object'])) {
-    echo "Warning - no HQ object found!<br>";
+if (!isset($_SESSION[$personalNumber])) {
     // If not, create a new Headquarters object and store it in session
-    $_SESSION['hq_object'] = new Headquarters($personalNumber); // Pass personalNumber to Headquarters constructor if needed
+    $_SESSION[$personalNumber] = new Headquarters($personalNumber); // Pass personalNumber to Headquarters constructor if needed
 }
 
 // Retrieve existing Headquarters object from session
-$hq = $_SESSION['hq_object'];
+$hq = $_SESSION[$personalNumber];
+if(!isset($hq)){
+    echo "warning - HQ object not found.";
+    // Create a new Headquarters object
+    $hq = new Headquarters(0);
+}
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } else {
         // Call createSoldier method to create a new soldier
         $hq->createSoldier($personalNumber, $fullName, $pakal, $password);
-        echo "Soldier created successfully!";
+        //echo "Soldier created successfully!";
     }
 
     }

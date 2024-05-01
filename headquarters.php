@@ -159,6 +159,7 @@ class Headquarters
     
         // Iterate through distinct classes and parse classId and className
         foreach ($distinctClasses as $class) {
+            if(isset($class['classId']) && isset($class['className'])){
             // Parse classId and className from depClass object
             $classId = $class['classId'];
             $className = $class['className'];
@@ -171,6 +172,7 @@ class Headquarters
                     break;
                 }
             }
+            
     
             // If the combination doesn't exist, add it to uniqueClasses array
             if (!$exists) {
@@ -178,6 +180,7 @@ class Headquarters
                     'classId' => $classId,
                     'className' => $className
                 ];
+            }
             }
         }
     
@@ -542,7 +545,7 @@ class Headquarters
             // Update soldiers with matching classId in their depClass
             $updateResult = $soldiersCollection->updateMany(
                 ['depClass.classId' => $classId],
-                ['$set' => ['depClass.className' => $newName]]
+                ['$set' => ['depClass.$.className' => $newName]]
             );
             
             // Check if any documents were modified
