@@ -537,22 +537,63 @@ class Headquarters
         }
 
         //Update a class
-        public function updateClass($classId, $newName)
+        public function updateClass($classIdInput, $newName)
         {
+            // Convert classIdInput to integer
+            $classId = intval($classIdInput);
+            
+            // Check if the conversion was successful
+            if ($classId == 0 && $classIdInput !== '0') {
+                echo "Invalid class ID: $classIdInput\n";
+                return 0; // Exit the function if the class ID is invalid
+            }
+        
             // Retrieve the soldiers collection
             $soldiersCollection = $this->db->selectCollection('soldiers');
             
             // Update soldiers with matching classId in their depClass
             $updateResult = $soldiersCollection->updateMany(
                 ['depClass.classId' => $classId],
-                ['$set' => ['depClass.$.className' => $newName]]
+                ['$set' => ['depClass.className' => $newName]]
             );
             
             // Check if any documents were modified
             if ($updateResult->getModifiedCount() > 0) {
                 echo "Successfully updated className for soldiers with classId $classId to $newName.\n";
+                return 1;
             } else {
                 echo "No soldiers found with classId $classId.\n";
+                return 0;
+            }
+        }
+
+        public function deleteClass($classIdInput)
+        {
+            // Convert classId to integer
+            $classId = intval($classIdInput);
+
+            // Check if the conversion was successful
+            if ($classId == 0 && $classIdInput !== '0') {
+                echo "Invalid class ID: $classIdInput\n";
+                return 0; // Exit the function if the class ID is invalid
+            }
+
+            // Retrieve the soldiers collection
+            $soldiersCollection = $this->db->selectCollection('soldiers');
+
+            // Update soldiers with matching classId by removing the depClass element
+            $updateResult = $soldiersCollection->updateMany(
+                ['depClass.classId' => $classId],
+                ['$unset' => ['depClass' => '']]
+            );
+
+            // Check if any documents were modified
+            if ($updateResult->getModifiedCount() > 0) {
+                echo "Successfully removed class $classId from soldiers.\n";
+                return 1;
+            } else {
+                echo "No soldiers found with classId $classId.\n";
+                return 0;
             }
         }
 

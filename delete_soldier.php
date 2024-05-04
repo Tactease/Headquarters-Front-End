@@ -1,8 +1,7 @@
 <?php
-require 'headquarters.php';
-
-// Start or resume session
 session_start();
+include "config.php";
+require 'headquarters.php';
 
 // Check if personalNumber is stored in session
 if (!isset($_SESSION["user_id"])) {

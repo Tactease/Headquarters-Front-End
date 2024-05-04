@@ -26,29 +26,6 @@ if(!isset($hq)){
     $hq = new Headquarters(0);
 }
 
-// // Check if form is submitted
-// if ($_SERVER["REQUEST_METHOD"] === "POST") {
-//     // Check if class ID is provided in the form
-//     if (isset($_POST['classId'])) {
-//         // Retrieve class ID from form data
-//         $classId = $_POST['classId'];
-
-//         // Validate class ID
-//         if (!empty($classId) && $classId > 0) {
-//             // Call selectClass method
-//             $hq->selectClass($classId);
-//             $_SESSION['hq_object'] = $hq;
-
-//             // Redirect back to main page
-//             header('Location' . URL . 'index.php');
-//             exit; // Ensure script execution stops after redirection
-//         } else {
-//             // Invalid class ID, show error message
-//             $errorMessage = "Please enter a valid class ID.";
-//         }
-//     }
-// }
-
 // Display the form to select a class
 ?>
 <!DOCTYPE html>
@@ -63,12 +40,12 @@ if(!isset($hq)){
     <h1>Select Class</h1>
     
     <!-- Existing classes form -->
-    <form action="index.php" method="post">
+    <form action="mainpage.php" method="post">
         <label for="classId">Enter Class ID:</label><br>
         <input type="number" id="classId" name="classId" class="form-control" required><br><br>
         <input type="submit" class="form-control-bar" value="Select Class"><br>
     </form>
-    <a href='index.php'>Back to Main Page</a><br>
+    <a href="<?php echo URL; ?>mainpage.php">Back to main page</a><br>
     <!-- list of existing classes -->
     <h3>Existing Classes</h3>
     <?php

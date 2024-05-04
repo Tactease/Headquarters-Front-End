@@ -9,7 +9,6 @@ if (!isset($_SESSION["user_id"])) {
     header("Location: login.php?error=noid");
     exit; // Ensure that no further code is executed after the redirection
 }
-
 // Retrieve personalNumber from session
 $personalNumber = $_SESSION["user_id"];
 
@@ -21,7 +20,11 @@ if (!isset($_SESSION[$personalNumber])) {
 
 // Retrieve existing Headquarters object from session
 $hq = $_SESSION[$personalNumber];
-
+if(!isset($hq)){
+    echo "warning - HQ object not found.";
+    // Create a new Headquarters object
+    $hq = new Headquarters(0);
+}
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Check if class ID and name are provided in the form
@@ -37,31 +40,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // Verify admin credentials
             $loginResult = intval($hq->verifyLogin($hq_number, $hq_pw));
             if ($loginResult) {
-                if (isset($_POST['deleteClass'])) {
-                    // Call deleteClass method if "Delete Class" button is pressed
-                    echo "calling the deleteClass function...";
-                    $deleteSuccess = $hq->deleteClass($classId);
+                // Call updateClass method
+                echo "calling the updateClass function...";
+                $updateSuccess = $hq->updateClass($classId, $newclassName);
 
-                    // Redirect back to main page
-                    if ($deleteSuccess) {
-                        header("Location: " . URL . "mainpage.php?classes=deleted");
-                        exit;
-                    }
-                    header("Location: " . URL . "mainpage.php?classes=not-deleted");
-                    exit; // Ensure script execution stops after redirection
-                } else {
-                    // Call updateClass method if "Update Class" button is pressed
-                    echo "calling the updateClass function...";
-                    $updateSuccess = $hq->updateClass($classId, $newclassName);
-
-                    // Redirect back to main page
-                    if ($updateSuccess) {
-                        header("Location: " . URL . "mainpage.php?classes=updated");
-                        exit;
-                    }
-                    header("Location: " . URL . "mainpage.php?classes=not-updated");
-                    exit; // Ensure script execution stops after redirection
+                // Redirect back to main page
+                if($updateSuccess){
+                    header("Location: " . URL . "mainpage.php?classes=updated");
+                    exit;
                 }
+                header("Location: " . URL . "mainpage.php?classes=not-updated");
+                exit; // Ensure script execution stops after redirection
             } else {
                 // Incorrect admin credentials
                 echo "Incorrect admin credentials. Please try again.";

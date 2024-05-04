@@ -1,10 +1,7 @@
 <?php
-// Include the Headquarters class
-require 'headquarters.php';
-include "config.php";
-
-// Start or resume session
 session_start();
+include "config.php";
+require 'headquarters.php';
 
 // Check if personalNumber is stored in session
 if (!isset($_SESSION["user_id"])) {
@@ -74,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($errorMessage)) {
             // Save the class to the MongoDB collection
             $hq->createClass($className, $commanderNumber, $soldiers, $numSoldiers);
-            header("Location: index.php");
+            header("Location: " . URL . "mainpage.php");
             exit;
         }
     }
@@ -98,31 +95,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php if (isset($errorMessage)) : ?>
         <p style="color: red;"><?php echo $errorMessage; ?></p>
     <?php endif; ?>
-<form action="#" method="post" autocomplete="on">
-    <label>Class Name:
-        <input type="text" name="class_name" class="form-control" required>
-    </label><br><br>
-    <label>Commander's Personal Number:
-        <input type="text" name="commander_number" class="form-control" required>
-    </label><br><br>
-    <label>Number of Soldiers (1 to 65):
-        <input type="number" name="num_soldiers" class="form-control" min="1" max="65" required>
-    </label><br><br>
-
-    <!-- Soldier Input Fields -->
-    <?php for ($i = 0; $i < 65; $i++): ?>
-        <label>Soldier <?= $i + 1 ?> Personal Number:
-            <input type="text" name="soldier_number_<?= $i ?>" class="form-control">
+    <form action="#" method="post" autocomplete="on">
+        <label>Class Name:
+            <input type="text" name="class_name" class="form-control" required>
         </label><br><br>
-    <?php endfor; ?> 
+        <label>Commander's Personal Number:
+            <input type="text" name="commander_number" class="form-control" required>
+        </label><br><br>
+        <label>Number of Soldiers (1 to 65):
+            <input type="number" name="num_soldiers" class="form-control" min="1" max="65" required>
+        </label><br><br>
 
-        <h4>Confirm admin data to perform action.</h4>
-        <label for="pakal">Personal Number:</label><br>
-        <input type="text" id="hq_number" name="hq_number" required><br><br>
-        <label for="password">Password:</label><br>
-        <input type="password" id="hq_pw" name="hq_pw" required><br><br>
+        <!-- Soldier Input Fields -->
+        <?php for ($i = 0; $i < 65; $i++): ?>
+            <label>Soldier <?= $i + 1 ?> Personal Number:
+                <input type="text" name="soldier_number_<?= $i ?>" class="form-control">
+            </label><br><br>
+        <?php endfor; ?> 
 
-    <input type="submit" class="form-control-bar" id="form_submit_btn" value="Submit New Class">               
-</form>
+            <h4>Confirm admin data to perform action.</h4>
+            <label for="pakal">Personal Number:</label><br>
+            <input type="text" id="hq_number" name="hq_number" required><br><br>
+            <label for="password">Password:</label><br>
+            <input type="password" id="hq_pw" name="hq_pw" required><br><br>
+
+        <input type="submit" class="form-control-bar" id="form_submit_btn" value="Submit New Class">               
+    </form>
+    <a href="<?php echo URL; ?>mainpage.php">Back to main page</a><br>
 </body>
 </html>

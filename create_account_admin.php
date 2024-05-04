@@ -87,6 +87,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <input type="password" id="hq_pw" name="hq_pw" required><br><br>
         <input type="submit" value="Create Admin Account">
     </form>
-    <a href="<?php echo URL; ?>index.php">Back to main page</a><br>
+    <a href="<?php echo URL; ?>mainpage.php">Back to main page</a><br>
 </body>
 </html>
