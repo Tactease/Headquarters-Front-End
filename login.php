@@ -20,9 +20,9 @@ if (!isset($_SESSION["user_id"])) {
     <h2>Login</h2>
     <form action="mainpage.php" method="post">
         <label for="personalNumber">Personal Number:</label><br>
-        <input type="text" id="personalNumber" name="personalNumber" required><br><br>
+        <input type="text" id="personalNumber" name="personalNumber" maxlength="7" required><br><br>
         <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password" required><br><br>
+        <input type="password" id="password" name="password" maxlength="50" required><br><br>
         <input type="submit" class="btn btn-primary" value="Login">
     </form>
 </body>

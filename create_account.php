@@ -74,18 +74,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <?php endif; ?>
     <form action="#" method="post">
         <label for="personal_number">Personal Number:</label><br>
-        <input type="text" id="personal_number" name="personal_number" required><br><br>
+        <input type="text" id="personal_number" name="personal_number" maxlength="7" required><br><br>
         <label for="full_name">Full Name:</label><br>
-        <input type="text" id="full_name" name="full_name" required><br><br>
+        <input type="text" id="full_name" name="full_name" maxlength="50" required><br><br>
         <label for="pakal">Pakal:</label><br>
-        <input type="text" id="pakal" name="pakal" required><br><br>
+        <input type="text" id="pakal" name="pakal" maxlength="50" required><br><br>
         <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password" required><br><br>        
+        <input type="password" id="password" name="password" minlength="3" maxlength="50" required><br><br>        
         <h4>Confirm admin data to perform action.</h4>
         <label for="pakal">Personal Number:</label><br>
-        <input type="text" id="hq_number" name="hq_number" required><br><br>
+        <input type="text" id="hq_number" name="hq_number" maxlength="7" required><br><br>
         <label for="password">Password:</label><br>
-        <input type="password" id="hq_pw" name="hq_pw" required><br><br>
+        <input type="password" id="hq_pw" name="hq_pw" maxlength="50" required><br><br>
         <input type="submit" class="btn btn-primary" value="Create Account">
     </form>
     <a href="<?php echo URL; ?>mainpage.php" class="btn btn-secondary">Back to main page</a><br>

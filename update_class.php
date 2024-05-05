@@ -97,13 +97,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <label for="classId">Enter Class ID:</label><br>
         <input type="number" id="classId" name="classId" class="form-control" required><br>
         <label for="className">Enter Class Name:</label><br>
-        <input type="text" id="newclassName" name="newclassName" class="form-control" required><br><br>
+        <input type="text" id="newclassName" name="newclassName" class="form-control" maxlength="50" required><br><br>
                 
         <h4>Confirm admin data to perform action.</h4>
         <label for="pakal">Personal Number:</label><br>
-        <input type="text" id="hq_number" name="hq_number" required><br><br>
+        <input type="text" id="hq_number" name="hq_number" maxlength="7" required><br><br>
         <label for="password">Password:</label><br>
-        <input type="password" id="hq_pw" name="hq_pw" required><br><br>
+        <input type="password" id="hq_pw" name="hq_pw" maxlength="50" required><br><br>
         <input type="submit" class="btn btn-primary"  name="updateClass" value="Update Class">
         <input type="submit" class="btn btn-danger"  name="deleteClass" value="Delete Class">
     </form>

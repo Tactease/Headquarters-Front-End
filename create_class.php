@@ -100,10 +100,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
     <form action="#" method="post" autocomplete="on">
         <label>Class Name:
-            <input type="text" name="class_name" class="form-control" required>
+            <input type="text" name="class_name" class="form-control" maxlength="50" required>
         </label><br><br>
         <label>Commander's Personal Number:
-            <input type="text" name="commander_number" class="form-control" required>
+            <input type="text" name="commander_number" class="form-control" maxlength="7" required>
         </label><br><br>
         <label>Number of Soldiers (1 to 65):
             <input type="number" name="num_soldiers" class="form-control" min="1" max="65" required>
@@ -112,15 +112,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Soldier Input Fields -->
         <?php for ($i = 0; $i < 65; $i++): ?>
             <label>Soldier <?= $i + 1 ?> Personal Number:
-                <input type="text" name="soldier_number_<?= $i ?>" class="form-control">
+                <input type="text" name="soldier_number_<?= $i ?>" class="form-control" maxlength="7">
             </label><br><br>
         <?php endfor; ?> 
 
             <h4>Confirm admin data to perform action.</h4>
             <label for="pakal">Personal Number:</label><br>
-            <input type="text" id="hq_number" name="hq_number" required><br><br>
+            <input type="text" id="hq_number" name="hq_number" maxlength="7" required><br><br>
             <label for="password">Password:</label><br>
-            <input type="password" id="hq_pw" name="hq_pw" required><br><br>
+            <input type="password" id="hq_pw" name="hq_pw" maxlength="50" required><br><br>
 
         <input type="submit"  class="btn btn-primary" id="form_submit_btn" value="Submit New Class">               
     </form>
