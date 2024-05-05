@@ -29,12 +29,14 @@ if(!isset($hq)){
 // Display the form to select a class
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Class</title>
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <h1>Select Class</h1>
@@ -43,9 +45,9 @@ if(!isset($hq)){
     <form action="mainpage.php" method="post">
         <label for="classId">Enter Class ID:</label><br>
         <input type="number" id="classId" name="classId" class="form-control" required><br><br>
-        <input type="submit" class="form-control-bar" value="Select Class"><br>
+        <input type="submit"  class="btn btn-primary" value="Select Class"><br>
     </form>
-    <a href="<?php echo URL; ?>mainpage.php">Back to main page</a><br>
+    <a href="<?php echo URL; ?>mainpage.php" class="btn btn-secondary">Back to main page</a><br>
     <!-- list of existing classes -->
     <h3>Existing Classes</h3>
     <?php

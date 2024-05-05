@@ -79,14 +79,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 // Display the form to select a class
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Class</title>
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <div class="container">
     <h1>Select Class</h1>
     
     <!-- Form to select or update class -->
@@ -101,10 +104,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <input type="text" id="hq_number" name="hq_number" required><br><br>
         <label for="password">Password:</label><br>
         <input type="password" id="hq_pw" name="hq_pw" required><br><br>
-        <input type="submit" class="form-control-bar" name="updateClass" value="Update Class">
-        <input type="submit" class="form-control-bar" name="deleteClass" value="Delete Class">
+        <input type="submit" class="btn btn-primary"  name="updateClass" value="Update Class">
+        <input type="submit" class="btn btn-danger"  name="deleteClass" value="Delete Class">
     </form>
-    <a href="<?php echo URL; ?>mainpage.php">Back to main page</a><br>
+    <a href="<?php echo URL; ?>mainpage.php" class="btn btn-secondary">Back to main page</a><br>
     <!-- list of existing classes -->
     <h3>Existing Classes</h3>
         <?php
@@ -116,6 +119,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
         ?>
 
-    <script src="scripts.js"></script>
+    </div>
 </body>
 </html>

@@ -600,8 +600,8 @@ class Headquarters
         //Show main page
         public function showMainPage()
         {
-            echo "<br>";
-            echo "<a href='select_class.php'>Select Class</a><br>";
+            echo '<div class="container">';
+            echo "<a href='select_class.php' class='btn btn-secondary'>Select Class</a><br>";
             $selectClassId = $this->currently_selected_classId;
         
             // Check if a class is selected
@@ -635,13 +635,18 @@ class Headquarters
                     echo "No soldiers within the selected class found.";
                 }
             }
-        
+            echo "</div>";
             // Links to create a class, create a new account, and update a class
             echo "<br>";
-            echo "<a href='create_class.php'>Create a Class</a><br>";
-            echo "<a href='create_account.php'>Create a New Account</a><br>";
-            echo "<a href='update_class.php'>Update a Class</a><br>";
-            echo "<a href='create_account_admin.php'>Create a New Account - Admin</a><br>";
+            echo '<div class="container">';
+            echo "<a href='create_class.php' class='btn btn-primary'>Create a Class</a><br>";
+            echo "<br>";
+            echo "<a href='create_account.php' class='btn btn-primary'>Create a New Account</a><br>";
+            echo "<br>";
+            echo "<a href='update_class.php' class='btn btn-primary'>Update a Class</a><br>";
+            echo "<br>";
+            echo "<a href='create_account_admin.php' class='btn btn-primary'>Create a New Account - Admin</a><br>";
+            echo "</div>";
         }
 }
 
