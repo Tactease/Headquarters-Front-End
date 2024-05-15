@@ -3,14 +3,15 @@ session_start();
 include "config.php";
 require 'headquarters.php';
 
-// Check if personalNumber is stored in session
-if (!isset($_SESSION["user_id"])) {
+//check that the user is logged in
+$user_id_from_cookie = getUserIdFromCookie();
+if (!$user_id_from_cookie) {
     // If not, redirect the user to the login page
-    header("Location: login.php?error=noid");
+    header("Location: index.php?error=noid");
     exit; // Ensure that no further code is executed after the redirection
 }
 // Retrieve personalNumber from session
-$personalNumber = $_SESSION["user_id"];
+$personalNumber = $user_id_from_cookie;
 
 // Check if Headquarters object is stored in session based on personalNumber
 if (!isset($_SESSION[$personalNumber])) {
@@ -28,10 +29,10 @@ if(!isset($hq)){
 
 // Check if form is submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $hq_number = $_POST['hq_number'];
+    $hq_number = $user_id_from_cookie;
     $hq_pw = $_POST['hq_pw'];    
     $loginResult = intval($hq->verifyLogin($hq_number, $hq_pw));
-    if($loginResult){
+    if($loginResult == 1){
     // Retrieve form data
     $className = $_POST['class_name'];
     $commanderNumber = $_POST['commander_number'];
@@ -78,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     }
     else {
-        echo "Confirmation data incorrect.";
+        handle_verify_error($loginResult);
     }
 }
 
@@ -117,13 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endfor; ?> 
 
             <h4>Confirm admin data to perform action.</h4>
-            <label for="pakal">Personal Number:</label><br>
-            <input type="text" id="hq_number" name="hq_number" maxlength="7" required><br><br>
             <label for="password">Password:</label><br>
             <input type="password" id="hq_pw" name="hq_pw" maxlength="50" required><br><br>
 
         <input type="submit"  class="btn btn-primary" id="form_submit_btn" value="Submit New Class">               
     </form>
+    <br>
     <a href="<?php echo URL; ?>mainpage.php" class="btn btn-secondary">Back to main page</a><br>
 </body>
 </html>

@@ -3,14 +3,15 @@ session_start();
 include "config.php";
 require 'headquarters.php';
 
-// Check if personalNumber is stored in session
-if (!isset($_SESSION["user_id"])) {
+//check that the user is logged in
+$user_id_from_cookie = getUserIdFromCookie();
+if (!$user_id_from_cookie) {
     // If not, redirect the user to the login page
-    header("Location: login.php?error=noid");
+    header("Location: index.php?error=noid");
     exit; // Ensure that no further code is executed after the redirection
 }
 // Retrieve personalNumber from session
-$personalNumber = $_SESSION["user_id"];
+$personalNumber = $user_id_from_cookie;
 
 // Check if Headquarters object is stored in session based on personalNumber
 if (!isset($_SESSION[$personalNumber])) {
@@ -47,6 +48,7 @@ if(!isset($hq)){
         <input type="number" id="classId" name="classId" class="form-control" required><br><br>
         <input type="submit"  class="btn btn-primary" value="Select Class"><br>
     </form>
+    <br>
     <a href="<?php echo URL; ?>mainpage.php" class="btn btn-secondary">Back to main page</a><br>
     <!-- list of existing classes -->
     <h3>Existing Classes</h3>

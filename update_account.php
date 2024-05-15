@@ -25,41 +25,47 @@ $hq = $_SESSION[$personalNumber];
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Check if class ID and name are provided in the form
-    if (isset($_POST['classId']) && isset($_POST['newclassName']) && $user_id_from_cookie && isset($_POST['hq_pw'])) {
+    if (isset($_POST['personalNumber']) && isset($_POST['newAccountName']) && $user_id_from_cookie && isset($_POST['hq_pw'])) {
         // Retrieve class ID and name from form data
-        $classId = $_POST['classId'];
-        $newclassName = $_POST['newclassName'];
+        $accountId = $_POST['personalNumber'];
+        $newAccName = $_POST['newAccountName'];
         $hq_number = $user_id_from_cookie;
         $hq_pw = $_POST['hq_pw'];
 
         // Validate class ID and name
-        if (!empty($classId) && $classId > 0 && !empty($newclassName) && !empty($hq_number) && !empty($hq_pw)) {
+        if (!empty($accountId) && $accountId > 0 && !empty($hq_number) && !empty($hq_pw)) {
             // Verify admin credentials
             $loginResult = intval($hq->verifyLogin($hq_number, $hq_pw));
             if ($loginResult == 1) {
-                if (isset($_POST['deleteClass'])) {
+                if (isset($_POST['deleteAccount'])) {
+                    if(!empty($newAccName)){
                     // Call deleteClass method if "Delete Class" button is pressed
-                    echo "calling the deleteClass function...";
-                    $deleteSuccess = $hq->deleteClass($classId);
+                    echo "calling the deleteAccount function...";
+                    $deleteSuccess = $hq->deleteSoldier($accountId);
 
                     // Redirect back to main page
                     if ($deleteSuccess) {
-                        header("Location: " . URL . "update_class.php?classes=deleted");
+                        header("Location: " . URL . "update_account.php?account=deleted");
                         exit;
                     }
-                    header("Location: " . URL . "update_class.php?classes=not-deleted");
+                    header("Location: " . URL . "update_account.php?account=not-deleted");
                     exit; // Ensure script execution stops after redirection
+                    }
+                    else {
+                        header("Location: " . URL . "update_account.php?account=name-empty");
+                        exit; // Ensure script execution stops after redirection                        
+                    }
                 } else {
                     // Call updateClass method if "Update Class" button is pressed
-                    echo "calling the updateClass function...";
-                    $updateSuccess = $hq->updateClass($classId, $newclassName);
+                    echo "calling the updateSoldier function...";
+                    $updateSuccess = $hq->updateSoldier($accountId, $newAccName);
 
                     // Redirect back to main page
                     if ($updateSuccess) {
-                        header("Location: " . URL . "update_class.php?classes=updated");
+                        header("Location: " . URL . "update_account.php?account=updated");
                         exit;
                     }
-                    header("Location: " . URL . "update_class.php?classes=not-updated");
+                    header("Location: " . URL . "update_account.php?account=not-updated");
                     exit; // Ensure script execution stops after redirection
                 }
             } else {
@@ -68,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         } else {
             // Invalid form data, show error message
-            $errorMessage = "Please enter valid data for class ID, class name, personal number, and password.";
+            $errorMessage = "Please enter valid data for soldier number, soldier name, personal number, and password.";
         }
     } else {
         // Form data is incomplete, show error message
@@ -76,69 +82,61 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-if(isset($_GET['classes'])){
-    $actStatus = $_GET['classes'];
+if(isset($_GET['account'])){
+    $actStatus = $_GET['account'];
     switch ($actStatus):
         case "deleted":
-            echo "Class deleted succesfully";
+            echo "Account deleted successfully";
             break;
         case "not-deleted":
-            echo "Class not deleted - not found in DB";
+            echo "Account not deleted - not found in DB";
             break;
         case "updated":
-            echo "Class updated succesfully";
+            echo "Account updated successfully";
             break;
         case "not-updated":
-            echo "Class not updated - not found in DB";
+            echo "Account not updated - not found in DB";
             break;
+        case "name-empty":
+            echo "Account not updated - name not provided properly";
+            break;            
         default:
             echo "Warning - unknown action status";
             break;
-        endswitch;
+    endswitch;
 }
 
-// Display the form to select a class
+// Display the form to select an account
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Class</title>
+    <title>Update Account</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-    <h1>Select Class to Update</h1>
+    <h1>Select Account to Update</h1>
     
-    <!-- Form to select or update class -->
-    <form action="update_class.php" method="post">
-        <label for="classId">Enter Class ID:</label><br>
-        <input type="number" id="classId" name="classId" class="form-control" required><br>
-        <label for="className">Enter Class Name:</label><br>
-        <input type="text" id="newclassName" name="newclassName" class="form-control" maxlength="50" required><br><br>
+    <!-- Form to select or update account -->
+    <form action="update_account.php" method="post">
+        <label for="classId">Enter Account personal Number:</label><br>
+        <input type="number" id="personalNumber" name="personalNumber" class="form-control" maxlength="7" required><br>
+        <label for="className">Enter Account Name:</label><br>
+        <input type="text" id="newAccountName" name="newAccountName" class="form-control" maxlength="50" required><br><br>
                 
         <h4>Confirm admin data to perform action.</h4>
         <label for="password">Password:</label><br>
         <input type="password" id="hq_pw" name="hq_pw" maxlength="50" required><br><br>
-        <input type="submit" class="btn btn-primary"  name="updateClass" value="Update Class">
-        <input type="submit" class="btn btn-danger"  name="deleteClass" value="Delete Class">
+        <input type="submit" class="btn btn-primary"  name="updateAccount" value="Update Account">
+        <input type="submit" class="btn btn-danger"  name="deleteAccount" value="Delete Account">
     </form>
     <br>
     <a href="<?php echo URL; ?>mainpage.php" class="btn btn-secondary">Back to main page</a><br>
-    <!-- list of existing classes -->
-    <h3>Existing Classes</h3>
-        <?php
-        // Retrieve existing classes from the headquarters object
-        $currentClasses = $hq->getUniqueClasses();
-        // Display each class in the list
-        foreach ($currentClasses as $class) {
-            echo "<p>Class ID: {$class['classId']} - Name: {$class['className']}</p>";
-        }
-        ?>
-
     </div>
 </body>
 </html>

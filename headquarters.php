@@ -30,7 +30,7 @@ class Headquarters
             $personalNumber = $inputNumber;
         }
         // Start or resume session
-        session_start();
+        //session_start();
 
         // Check if Headquarters object is stored in session
         if (!isset($_SESSION['headquarters'])) {
@@ -86,22 +86,7 @@ class Headquarters
         }
     }
 
-	// Function to verify password (Compare hashed/encrypted password)
-	private function verifyPassword($inputPassword, $storedPassword)
-	{
-		// ENCRYPTION METHOD MUST BE SAME AS FOR SOLDIER'S PASSWORD ENCRYPTION
-		//$encryptionMethod = readline("Enter encryption method (e.g., md5, sha256): ");
-		// use global method set in constructor - set to global method when it is determined
-        //currently set to md5 (see above, in __construct() function)
-		$encryptionMethod = $this->used_encrypt;
-		
-		// Encrypt the password
-		// Encrypt the input password using the same method as stored password
-		$encryptedInputPassword = $this->encrypt($inputPassword, $encryptionMethod);
-	
-		// Compare hashed or encrypted passwords
-		return $encryptedInputPassword === $storedPassword;
-	}
+    //Verify Admin Login Credentials
     public function verifyLogin($inputNumber, $inputPassword)
     {
         $intNumber = (int) $inputNumber;
@@ -110,12 +95,86 @@ class Headquarters
         try {
             // Retrieve the admin document based on the input personalNumber
             $admin = $adminsCollection->findOne(['personalNumber' => $intNumber]);
-    
-            if ($admin && isset($admin['isAdmin']) && $admin['isAdmin'] && password_verify($inputPassword, $admin['password'])) {
-                // Password is correct
-                return 1;
+            //found admin
+            if ($admin && isset($admin['isAdmin']) && $admin['isAdmin']) {
+                $currentAttempts = intval($admin['attemptsLeft']);
+                $lockedUntil = intval($admin['locked_until']);
+                $currentTime = intval(time());
+                $lockSuccess = 0;
+                //lockout has expired, restore account
+                if($currentTime > $lockedUntil){
+                    if($currentAttempts < 1){
+                    $currentAttempts = MAX_ATTEMPTS;
+                    $attemptRestoreResult = $adminsCollection->updateOne(
+                        ['personalNumber' => $intNumber],
+                        ['$set' => ['attemptsLeft' => ($currentAttempts)]]
+                    );
+                    if(!$attemptRestoreResult){
+                        //lockout expire error
+                        return 205;
+                    }
+                    }
+                }
+                //lockout has not expired
+                else{
+                    return 206;
+                }
+                if($currentAttempts > 0){
+                    // Password is correct
+                    if(password_verify($inputPassword, $admin['password'])){
+                        return 1;
+                    }
+                    // Password incorrect, reduce available attempts 
+                    else{
+                        $currentAttempts = $currentAttempts - 1;
+                        $attemptReduceResult = $adminsCollection->updateOne(
+                            ['personalNumber' => $intNumber],
+                            ['$set' => ['attemptsLeft' => ($currentAttempts)]]
+                        );
+                        //If no more attempts left, lock account
+                        if($currentAttempts < 1){
+                            $lockSuccess = $adminsCollection->updateOne(
+                                ['personalNumber' => $intNumber],
+                                ['$set' => ['locked_until' => (time() + LOCKOUT_DURATION)]]
+                            );
+                            //$lockSuccess = adminLockSeconds($intNumber,LOCKOUT_DURATION);
+                            if($lockSuccess->getModifiedCount() > 0){
+                                //lock success
+                                return 203;
+                            }
+                            else{
+                                //lock error
+                                return 204;
+                            }
+                        }
+                        if($attemptReduceResult){
+                            //attempts reduced success
+                            return 201;
+                        }
+                        else{
+                            //attempts reduce error
+                            return 202;
+                        }
+                    }
+                }
+                else{
+                    //If no more attempts left, lock account
+                    $lockSuccess = $adminsCollection->updateOne(
+                        ['personalNumber' => $intNumber],
+                        ['$set' => ['locked_until' => (time() + LOCKOUT_DURATION)]]
+                    );
+                    //$lockSuccess = adminLockSeconds($intNumber,LOCKOUT_DURATION);
+                    if($lockSuccess->getModifiedCount() > 0){
+                        //lock success
+                        return 203;
+                    }
+                    else{
+                        //lock error
+                        return 204;
+                    }
+                }
             } else {
-                // Password is incorrect or admin not found
+                // Admin not found
                 return 0;
             }
         } catch (\Exception $e) {
@@ -125,7 +184,7 @@ class Headquarters
             return 0;
         }
     }
-    #Generate ID for class
+    //Generate ID for class
     private function generateUniqueClassId()
     {
     $classId = null;
@@ -218,36 +277,76 @@ class Headquarters
     // Return the array of existing classes
     return $existingSoldiers;
     }
-
-    // DELETE SOLDIER via direct input and popup scripts
-    private function confirmDelete($soldierName, $soldierId) {
-         //script to show a popup window with "are you sure..." and then info depending on actions done.
-        echo "<script>";
-        echo "var confirmation = confirm('Are you sure you want to delete soldier named $soldierName?');";
-        echo "if (confirmation) {";
-        echo "  window.location.href = 'delete_soldier.php?soldierId=$soldierId';";
-        echo "} else {";
-        echo "  alert('The soldier named $soldierName was NOT deleted.');";
-        echo "}";
-        echo "</script>";
-    }
-    
-    public function deleteSoldierFromCollection($soldierId)
+    //Delete soldier with personalNumber
+    public function deleteSoldier($inputNumber)
     {
+        // Retrieve the soldiers collection
         $soldiersCollection = $this->db->selectCollection('soldiers');
-        
-        // Retrieve soldier's name based on _id
-        $soldier = $soldiersCollection->findOne(['_id' => $soldierId]);
-        $soldierName = $soldier['fullName']; // Assuming 'fullName' field stores the soldier's name
-        
-        // Call JavaScript function to confirm deletion
-        $this->confirmDelete($soldierName, $soldierId);
-    }
 
-	//Lock account for given amout of seconds
-	private function lockout_seconds($lock_minutes){
-		// implement lockout logic;
-	}
+        $personalNumber = intval($inputNumber);
+    
+        // Define the filter to find the soldier by personalNumber
+        $filter = ['personalNumber' => $personalNumber];
+    
+        // Delete the soldier matching the filter
+        $deleteResult = $soldiersCollection->deleteOne($filter);
+    
+        // Check if the deletion was successful
+        if ($deleteResult->getDeletedCount() > 0) {
+            echo "Successfully deleted soldier with personal number $personalNumber.\n";
+            return true;
+        } else {
+            echo "No soldier found with personal number $personalNumber.\n";
+            return false;
+        }
+    }
+    //Update soldier with personalNumber
+    public function updateSoldier($inputNumber, $newFullName)
+    {
+        // Retrieve the soldiers collection
+        $soldiersCollection = $this->db->selectCollection('soldiers');
+
+        $personalNumber = intval($inputNumber);
+        
+        // Update the soldier's fullName
+        $updateResult = $soldiersCollection->updateOne(
+            ['personalNumber' => $personalNumber],
+            ['$set' => ['fullName' => $newFullName]]
+        );
+        
+        // Check if the update was successful
+        if ($updateResult->getModifiedCount() > 0) {
+            echo "Successfully updated fullName for soldier with personalNumber $personalNumber to $newFullName.\n";
+            return true;
+        } else {
+            echo "No soldier found with personalNumber $personalNumber.\n";
+            return false;
+        }
+    }
+    //Recover soldier account
+    public function recoverSoldier($inputNumber, $newPass)
+    {
+        $personalNumber = intval($inputNumber);
+        // Retrieve the soldiers collection
+        $soldiersCollection = $this->db->selectCollection('soldiers');
+
+        $hashedPassword = password_hash($newPass, PASSWORD_DEFAULT);
+        
+        // Update the soldier's fullName
+        $updateResult = $soldiersCollection->updateOne(
+            ['personalNumber' => $personalNumber],
+            ['$set' => ['password' => $hashedPassword]]
+        );
+        
+        // Check if the update was successful
+        if ($updateResult->getModifiedCount() > 0) {
+            echo "Successfully updated password for soldier with personalNumber $personalNumber.\n";
+            return true;
+        } else {
+            echo "No soldier found with personalNumber $personalNumber.\n";
+            return false;
+        }
+    }
     
     // MAIN FUNCTIONS
     //create a new soldier
@@ -293,6 +392,8 @@ class Headquarters
         // Encrypt the password
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
+        $hourBefore = (time() - 3600);
+
         // Create soldier document
         $adminDocument = [
             'personalNumber' => intval($personalNumber),
@@ -301,7 +402,9 @@ class Headquarters
             'requestList' => [], // Empty request list for new soldier
             'depClass' => null, // No class assigned initially
             'password' => $hashedPassword, // Encrypted password
-            'isAdmin' => true
+            'isAdmin' => true,
+            'attemptsLeft' => MAX_ATTEMPTS,
+            'locked_until' => intval($hourBefore)
         ];
 
         // Insert soldier document into MongoDB collection
@@ -377,277 +480,132 @@ class Headquarters
         echo "Class $removeClassName removed from all soldiers successfully!\n";
     }
 
-        // Update or delete soldier's account
-        public function updateAccount()
-        {
-            // Ask for soldier's personal number
-            $soldierNumber = readline("Enter soldier's personal number: ");
-    
-            // Find soldier by personal number
-            $soldiersCollection = $this->db->selectCollection('soldiers');
-            $soldier = $soldiersCollection->findOne(['personalNumber' => intval($soldierNumber)]);
-    
-            // If soldier not found, display error message
-            if (!$soldier) {
-                echo "Error: Soldier with personal number $soldierNumber not found.\n";
-                return;
-            }
-    
-            // Display soldier's information
-            echo "Soldier Information:\n";
-            echo "Personal Number: {$soldier['personalNumber']}\n";
-            echo "Full Name: {$soldier['fullName']}\n";
-            echo "Pakal: {$soldier['pakal']}\n";
-    
-            // Prompt user for action (update or delete)
-            $action = readline("Choose an action (update/delete): ");
-    
-            // Perform action based on user input
-            switch ($action) {
-                case 'update':
-                    $this->updateSoldier($soldier); //see below
-                    break;
-                case 'delete':
-                    $this->deleteSoldier($soldier); //see below
-                    break;
-                default:
-                    echo "Invalid action.\n";
-                    break;
-            }
+    //Select a class and set it as the currently selected class
+    public function selectClass($classId)
+    {
+        // Set the currently selected class ID
+        $this->currently_selected_classId = $classId;
+
+        echo "Class ID $classId selected.\n";
+    }
+
+    //Update a class
+    public function updateClass($classIdInput, $newName)
+    {
+        // Convert classIdInput to integer
+        $classId = intval($classIdInput);
+        
+        // Check if the conversion was successful
+        if ($classId == 0 && $classIdInput !== '0') {
+            echo "Invalid class ID: $classIdInput\n";
+            return 0; // Exit the function if the class ID is invalid
         }
     
-        // Function to update soldier's account
-        private function updateSoldier($soldier)
-        {
-            // Ask for password to permit the change
-            $password = readline("Enter password to permit the change: ");
+        // Retrieve the soldiers collection
+        $soldiersCollection = $this->db->selectCollection('soldiers');
         
-            $attempts_left = 3;
+        // Update soldiers with matching classId in their depClass
+        $updateResult = $soldiersCollection->updateMany(
+            ['depClass.classId' => $classId],
+            ['$set' => ['depClass.className' => $newName]]
+        );
         
-            // Verify password (Example: compare with stored hashed password)
-            if ($this->verifyPassword($password, $soldier['password'])) {
-                // Ask for the new full name
-                $newFullName = readline("Enter new full name: ");
-        
-                // Check if the input for new full name is empty
-                if (!empty($newFullName)) {
-                    // Perform update: Update soldier's fullName
-                    $soldier['fullName'] = $newFullName;
-                    
-                    // Update soldier document in the MongoDB collection
-                    $soldiersCollection = $this->db->selectCollection('soldiers');
-                    $result = $soldiersCollection->replaceOne(['_id' => $soldier['_id']], $soldier);
-        
-                    // Notify user about the update
-                    if ($result->getModifiedCount() === 1) {
-                        echo "Account updated successfully!\n";
-                    } else {
-                        echo "Failed to update account.\n";
-                    }
-                } else {
-                    echo "Warning: Input for new full name is empty. The name will not be changed.\n";
-                }
-            } elseif ($attempts_left > 0) {
-                echo "Incorrect password. You have $attempts_left more tries.\n";
-                $attempts_left = $attempts_left - 1;
-            } else {
-                echo "Incorrect password. No more tries left. Your account has been locked for an hour.\n";
-                $this->lockout_seconds(3600);
-            }
+        // Check if any documents were modified
+        if ($updateResult->getModifiedCount() > 0) {
+            echo "Successfully updated className for soldiers with classId $classId to $newName.\n";
+            return 1;
+        } else {
+            echo "No soldiers found with classId $classId.\n";
+            return 0;
         }
+    }
+
+    public function deleteClass($classIdInput)
+    {
+        // Convert classId to integer
+        $classId = intval($classIdInput);
+
+        // Check if the conversion was successful
+        if ($classId == 0 && $classIdInput !== '0') {
+            echo "Invalid class ID: $classIdInput\n";
+            return 0; // Exit the function if the class ID is invalid
+        }
+
+        // Retrieve the soldiers collection
+        $soldiersCollection = $this->db->selectCollection('soldiers');
+
+        // Update soldiers with matching classId by removing the depClass element
+        $updateResult = $soldiersCollection->updateMany(
+            ['depClass.classId' => $classId],
+            ['$unset' => ['depClass' => '']]
+        );
+
+        // Check if any documents were modified
+        if ($updateResult->getModifiedCount() > 0) {
+            echo "Successfully removed class $classId from soldiers.\n";
+            return 1;
+        } else {
+            echo "No soldiers found with classId $classId.\n";
+            return 0;
+        }
+    }
+
+    //Show main page
+    public function showMainPage()
+    {
+        echo '<div class="container">';
+        echo "<a href='select_class.php' class='btn btn-secondary'>Select Class</a><br>";
+        $selectClassId = $this->currently_selected_classId;
     
-        //Function to delete soldier's account
-        private function deleteSoldier($soldier)
-        {
-            // Ask for password to delete the account
-            $password = readline("Enter password to delete the account: ");
-
-			$attempts_left = 3;			
+        // Check if a class is selected
+        if ($selectClassId === CLASS_NONE) {
+            echo "No class selected.";
+            //return;
+        } else {
+            // Retrieve soldiers from the currently selected class
+            $soldiersCursor = $this->getExistingSoldiers();
     
-            // Verify password (Example: compare with stored hashed password)
-            if ($this->verifyPassword($password, $soldier['password'])) {
-                // Perform deletion (Example: Remove soldier from database)
-                $this->deleteSoldierFromCollection($soldier['_id']);
+            // Initialize a flag to track if soldiers were found
+            $soldiersFound = false;
     
-                echo "Account deleted successfully!\n";
-            }
-			elseif($attempts_left > 0) {
-                echo "Incorrect password. You have $attempts_left more tries.\n";
-                $attempts_left = $attempts_left-1;
-            }
-			else{
-				echo "Incorrect password. No more tries left. Your account has been locked for an hour.\n";
-				$this->lockout_seconds(3600);
-			}
-        }
-
-		//Help recover account by generating and updating a new password
-		public function recoverAccount()
-		{
-			// Ask for soldier's personal number
-			$soldierNumber = readline("Enter soldier's personal number: ");
-
-			// Find soldier by personal number
-			$soldiersCollection = $this->db->selectCollection('soldiers');
-			$soldier = $soldiersCollection->findOne(['personalNumber' => intval($soldierNumber)]);
-
-			// If soldier not found, display error message
-			if (!$soldier) {
-				echo "Error: Soldier with personal number $soldierNumber not found.\n";
-				return;
-			}
-
-			// Generate new password
-			$newPassword = $this->generatePassword();
-
-			// Update soldier's document with new password
-			$soldier['password'] = $this->encrypt($newPassword, $this->used_encrypt);
-			$result = $soldiersCollection->replaceOne(['_id' => $soldier['_id']], $soldier);
-
-			// Notify user about password update
-			if ($result->getModifiedCount() === 1) {
-				echo "New password generated and updated successfully!\n";
-				echo "New Password: $newPassword\n";
-			} else {
-				echo "Failed to update password.\n";
-			}
-		}
-
-	    // Function to generate a new random password
-		private function generatePassword()
-		{
-			// Generate a new random password
-			$length = 10; // Set the desired length of the password
-			// character set for password.
-			$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-			$password = '';
-			for ($i = 0; $i < $length; $i++) {
-				$password .= $characters[rand(0, strlen($characters) - 1)];
-			}
-			return $password;
-		}
-
-        //Select a class and set it as the currently selected class
-        public function selectClass($classId)
-        {
-            // Set the currently selected class ID
-            $this->currently_selected_classId = $classId;
-
-            echo "Class ID $classId selected.\n";
-        }
-
-        //Update a class
-        public function updateClass($classIdInput, $newName)
-        {
-            // Convert classIdInput to integer
-            $classId = intval($classIdInput);
-            
-            // Check if the conversion was successful
-            if ($classId == 0 && $classIdInput !== '0') {
-                echo "Invalid class ID: $classIdInput\n";
-                return 0; // Exit the function if the class ID is invalid
-            }
-        
-            // Retrieve the soldiers collection
-            $soldiersCollection = $this->db->selectCollection('soldiers');
-            
-            // Update soldiers with matching classId in their depClass
-            $updateResult = $soldiersCollection->updateMany(
-                ['depClass.classId' => $classId],
-                ['$set' => ['depClass.className' => $newName]]
-            );
-            
-            // Check if any documents were modified
-            if ($updateResult->getModifiedCount() > 0) {
-                echo "Successfully updated className for soldiers with classId $classId to $newName.\n";
-                return 1;
-            } else {
-                echo "No soldiers found with classId $classId.\n";
-                return 0;
-            }
-        }
-
-        public function deleteClass($classIdInput)
-        {
-            // Convert classId to integer
-            $classId = intval($classIdInput);
-
-            // Check if the conversion was successful
-            if ($classId == 0 && $classIdInput !== '0') {
-                echo "Invalid class ID: $classIdInput\n";
-                return 0; // Exit the function if the class ID is invalid
-            }
-
-            // Retrieve the soldiers collection
-            $soldiersCollection = $this->db->selectCollection('soldiers');
-
-            // Update soldiers with matching classId by removing the depClass element
-            $updateResult = $soldiersCollection->updateMany(
-                ['depClass.classId' => $classId],
-                ['$unset' => ['depClass' => '']]
-            );
-
-            // Check if any documents were modified
-            if ($updateResult->getModifiedCount() > 0) {
-                echo "Successfully removed class $classId from soldiers.\n";
-                return 1;
-            } else {
-                echo "No soldiers found with classId $classId.\n";
-                return 0;
-            }
-        }
-
-        //Show main page
-        public function showMainPage()
-        {
-            echo '<div class="container">';
-            echo "<a href='select_class.php' class='btn btn-secondary'>Select Class</a><br>";
-            $selectClassId = $this->currently_selected_classId;
-        
-            // Check if a class is selected
-            if ($selectClassId === CLASS_NONE) {
-                echo "No class selected.";
-                //return;
-            } else {
-                // Retrieve soldiers from the currently selected class
-                $soldiersCursor = $this->getExistingSoldiers();
-        
-                // Initialize a flag to track if soldiers were found
-                $soldiersFound = false;
-        
-                // Display soldiers' information in a table
-                echo "<table>";
-                echo "<tr><th>Personal Number</th><th>Name</th></tr>";
-                foreach ($soldiersCursor as $soldier) {
-                    if($soldier['classId'] == $selectClassId){
-                    echo "<tr>";
-                    echo "<td>{$soldier['personalNumber']}</td>";
-                    echo "<td>{$soldier['fullName']}</td>";
-                    echo "<td>{$soldier['classId']}</td>";
-                    echo "</tr>";
-                    $soldiersFound = true; // Set the flag to true if at least one soldier is found
-                    }
-                }
-                echo "</table>";
-        
-                // Check if soldiers were found
-                if (!$soldiersFound) {
-                    echo "No soldiers within the selected class found.";
+            // Display soldiers' information in a table
+            echo "<table>";
+            echo "<tr><th>Personal Number</th><th>Name</th></tr>";
+            foreach ($soldiersCursor as $soldier) {
+                if($soldier['classId'] == $selectClassId){
+                echo "<tr>";
+                echo "<td>{$soldier['personalNumber']}</td>";
+                echo "<td>{$soldier['fullName']}</td>";
+                echo "</tr>";
+                $soldiersFound = true; // Set the flag to true if at least one soldier is found
                 }
             }
-            echo "</div>";
-            // Links to create a class, create a new account, and update a class
-            echo "<br>";
-            echo '<div class="container">';
-            echo "<a href='create_class.php' class='btn btn-primary'>Create a Class</a><br>";
-            echo "<br>";
-            echo "<a href='create_account.php' class='btn btn-primary'>Create a New Account</a><br>";
-            echo "<br>";
-            echo "<a href='update_class.php' class='btn btn-primary'>Update a Class</a><br>";
-            echo "<br>";
-            echo "<a href='create_account_admin.php' class='btn btn-primary'>Create a New Account - Admin</a><br>";
-            echo "</div>";
+            echo "</table>";
+    
+            // Check if soldiers were found
+            if (!$soldiersFound) {
+                echo "No soldiers within the selected class found.";
+            }
         }
+        echo "</div>";
+        // Links to create a class, create a new account, and update a class
+        echo "<br>";
+        echo '<div class="container">';
+        echo "<a href='create_class.php' class='btn btn-primary'>Create a Class</a><br>";
+        echo "<br>";
+        echo "<a href='create_account.php' class='btn btn-primary'>Create a New Account</a><br>";
+        echo "<br>";
+        echo "<a href='update_class.php' class='btn btn-primary'>Update a Class</a><br>";
+        echo "<br>";
+        echo "<a href='create_account_admin.php' class='btn btn-primary'>Create a New Account - Admin</a><br>";
+        echo "<br>";
+        echo "<a href='update_account.php' class='btn btn-primary'>Update an Account</a><br>";
+        echo "<br>";
+        echo "<a href='recover_account.php' class='btn btn-primary'>Recover an Account</a><br>";
+        echo "<br>";
+        echo "<a href='logout.php' class='btn btn-danger'>Logout</a><br>";
+        echo "</div>";
+    }
 }
 
 // Example usage:
