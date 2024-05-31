@@ -33,6 +33,18 @@ if (isset($_GET["error"])) {
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <header>
+        <div class="logo">
+            <img src="public/TactEaseLogo.png" alt="Logo" height="200">
+        </div>
+        <div class="header-main-text">
+            <h2>The Headquarters</h2>
+        </div>
+        <div class="user-avatar">
+            <img src="public/userDefault.png" alt="User Avatar" height="150">
+        </div>
+    </header>
+    <br>    
     <h2>Login</h2>
     <form action="mainpage.php" method="post">
         <label for="personalNumber">Personal Number:</label><br>
