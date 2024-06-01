@@ -2,8 +2,8 @@
 
 require 'vendor/autoload.php';
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+//$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+//$dotenv->load();
 
 use MongoDB\Client as MongoClient;
 use MongoDB\BSON\ObjectId as MongoObjectID;
@@ -65,10 +65,10 @@ class Headquarters
     public function soldierExists($soldierNumber)
     {
         $soldiersCollection = $this->db->selectCollection('soldiers');
-    
+
         // Search for soldier with given personal number
         $soldier = $soldiersCollection->findOne(['personalNumber' => intval($soldierNumber)]);
-    
+
         return $soldier !== null; // Return true if soldier exists, false otherwise
     }
 
@@ -91,7 +91,7 @@ class Headquarters
     {
         $intNumber = (int) $inputNumber;
         $adminsCollection = $this->db->selectCollection('soldiers');
-    
+
         try {
             // Retrieve the admin document based on the input personalNumber
             $admin = $adminsCollection->findOne(['personalNumber' => $intNumber]);
@@ -124,7 +124,7 @@ class Headquarters
                     if(password_verify($inputPassword, $admin['password'])){
                         return 1;
                     }
-                    // Password incorrect, reduce available attempts 
+                    // Password incorrect, reduce available attempts
                     else{
                         $currentAttempts = $currentAttempts - 1;
                         $attemptReduceResult = $adminsCollection->updateOne(
@@ -209,20 +209,20 @@ class Headquarters
     {
         // Array to store unique depClass combinations
         $uniqueClasses = [];
-    
+
         // Retrieve soldiers collection
         $soldiersCollection = $this->db->selectCollection('soldiers');
-    
+
         // Find distinct depClass combinations
         $distinctClasses = $soldiersCollection->distinct('depClass');
-    
+
         // Iterate through distinct classes and parse classId and className
         foreach ($distinctClasses as $class) {
             if(isset($class['classId']) && isset($class['className'])){
             // Parse classId and className from depClass object
             $classId = $class['classId'];
             $className = $class['className'];
-    
+
             // Check if the combination already exists in uniqueClasses array
             $exists = false;
             foreach ($uniqueClasses as $uniqueClass) {
@@ -231,8 +231,8 @@ class Headquarters
                     break;
                 }
             }
-            
-    
+
+
             // If the combination doesn't exist, add it to uniqueClasses array
             if (!$exists) {
                 $uniqueClasses[] = [
@@ -242,7 +242,7 @@ class Headquarters
             }
             }
         }
-    
+
         return $uniqueClasses;
     }
 
@@ -250,7 +250,7 @@ class Headquarters
     {
     // Select the classes collection from the MongoDB database
     $soldiersCollection = $this->soldiersCollection;
-    
+
     // Retrieve all documents (classes) from the collection
     $solCursor = $soldiersCollection->find();
 
@@ -284,13 +284,13 @@ class Headquarters
         $soldiersCollection = $this->db->selectCollection('soldiers');
 
         $personalNumber = intval($inputNumber);
-    
+
         // Define the filter to find the soldier by personalNumber
         $filter = ['personalNumber' => $personalNumber];
-    
+
         // Delete the soldier matching the filter
         $deleteResult = $soldiersCollection->deleteOne($filter);
-    
+
         // Check if the deletion was successful
         if ($deleteResult->getDeletedCount() > 0) {
             echo "Successfully deleted soldier with personal number $personalNumber.\n";
@@ -307,13 +307,13 @@ class Headquarters
         $soldiersCollection = $this->db->selectCollection('soldiers');
 
         $personalNumber = intval($inputNumber);
-        
+
         // Update the soldier's fullName
         $updateResult = $soldiersCollection->updateOne(
             ['personalNumber' => $personalNumber],
             ['$set' => ['fullName' => $newFullName]]
         );
-        
+
         // Check if the update was successful
         if ($updateResult->getModifiedCount() > 0) {
             echo "Successfully updated fullName for soldier with personalNumber $personalNumber to $newFullName.\n";
@@ -331,13 +331,13 @@ class Headquarters
         $soldiersCollection = $this->db->selectCollection('soldiers');
 
         $hashedPassword = password_hash($newPass, PASSWORD_DEFAULT);
-        
+
         // Update the soldier's fullName
         $updateResult = $soldiersCollection->updateOne(
             ['personalNumber' => $personalNumber],
             ['$set' => ['password' => $hashedPassword]]
         );
-        
+
         // Check if the update was successful
         if ($updateResult->getModifiedCount() > 0) {
             echo "Successfully updated password for soldier with personalNumber $personalNumber.\n";
@@ -347,13 +347,13 @@ class Headquarters
             return false;
         }
     }
-    
+
     // MAIN FUNCTIONS
     //create a new soldier
     public function createSoldier($personalNumber, $fullName, $pakal, $password)
     {
         $soldiersCollection = $this->db->selectCollection('soldiers');
-    
+
         // Check if soldier already exists
         if ($this->soldierExists($personalNumber)) {
             echo "Error: Soldier with personal number $personalNumber already exists in the system.\n";
@@ -382,7 +382,7 @@ class Headquarters
     }
     public function createAdmin($personalNumber, $fullName, $pakal, $password)
     {
-    
+
         // Check if soldier already exists
         if ($this->soldierExists($personalNumber)) {
             echo "Error: Soldier with personal number $personalNumber already exists in the system.\n";
@@ -417,32 +417,32 @@ class Headquarters
     {
         // Generate a unique classId for the class
         $classId = $this->generateUniqueClassId();
-    
+
         // Update the depClass field for each soldier
         $soldiersCollection = $this->db->selectCollection('soldiers');
-    
+
         foreach ($soldiers as $soldierNumber) {
             // Find soldier by personal number
             $soldier = $soldiersCollection->findOne(['personalNumber' => intval($soldierNumber)]);
-    
+
             // If soldier not found, skip to the next one
             if (!$soldier) {
                 echo "Error: Soldier with personal number $soldierNumber not found.\n";
                 continue;
             }
-    
+
             // Update soldier's class information
             $depClass = [
                 'classId' => $classId,
                 'className' => $className
             ];
-    
+
             // Update soldier document in the collection
             $updateResult = $soldiersCollection->updateOne(
                 ['personalNumber' => intval($soldierNumber)],
                 ['$set' => ['depClass' => $depClass]]
             );
-    
+
             // Check if the update was successful
             if ($updateResult->getModifiedCount() > 0) {
                 echo "Class information updated for soldier with personal number $soldierNumber\n";
@@ -450,7 +450,7 @@ class Headquarters
                 echo "Error updating class information for soldier with personal number $soldierNumber\n";
             }
         }
-    
+
         echo "Class saved successfully!\n";
     }
     //remove class from soldier
@@ -458,17 +458,17 @@ class Headquarters
     {
         // Update the depClass field for each soldier
         $soldiersCollection = $this->db->selectCollection('soldiers');
-    
+
         // Find all soldiers with the specified class to remove
         $soldiersWithClass = $soldiersCollection->find(['depClass.classId' => $removeClassId, 'depClass.className' => $removeClassName]);
-    
+
         foreach ($soldiersWithClass as $soldier) {
             // Update soldier's depClass to null or safe default value
             $updateResult = $soldiersCollection->updateOne(
                 ['_id' => $soldier['_id']],
                 ['$unset' => ['depClass' => '']]
             );
-    
+
             // Check if the update was successful
             if ($updateResult->getModifiedCount() > 0) {
                 echo "Class removed for soldier with personal number {$soldier['personalNumber']}\n";
@@ -476,7 +476,7 @@ class Headquarters
                 echo "Error removing class for soldier with personal number {$soldier['personalNumber']}\n";
             }
         }
-    
+
         echo "Class $removeClassName removed from all soldiers successfully!\n";
     }
 
@@ -494,22 +494,22 @@ class Headquarters
     {
         // Convert classIdInput to integer
         $classId = intval($classIdInput);
-        
+
         // Check if the conversion was successful
         if ($classId == 0 && $classIdInput !== '0') {
             echo "Invalid class ID: $classIdInput\n";
             return 0; // Exit the function if the class ID is invalid
         }
-    
+
         // Retrieve the soldiers collection
         $soldiersCollection = $this->db->selectCollection('soldiers');
-        
+
         // Update soldiers with matching classId in their depClass
         $updateResult = $soldiersCollection->updateMany(
             ['depClass.classId' => $classId],
             ['$set' => ['depClass.className' => $newName]]
         );
-        
+
         // Check if any documents were modified
         if ($updateResult->getModifiedCount() > 0) {
             echo "Successfully updated className for soldiers with classId $classId to $newName.\n";
@@ -556,7 +556,7 @@ class Headquarters
         echo '<div class="container">';
         echo "<a href='select_class.php' class='btn btn-secondary'>Select Class</a><br>";
         $selectClassId = $this->currently_selected_classId;
-    
+
         // Check if a class is selected
         if ($selectClassId === CLASS_NONE) {
             echo "No class selected.";
@@ -564,10 +564,10 @@ class Headquarters
         } else {
             // Retrieve soldiers from the currently selected class
             $soldiersCursor = $this->getExistingSoldiers();
-    
+
             // Initialize a flag to track if soldiers were found
             $soldiersFound = false;
-    
+
             // Display soldiers' information in a table
             echo "<table class='styled-table'>";
             echo "<tr><th>Personal Number</th><th>Name</th></tr>";
@@ -581,7 +581,7 @@ class Headquarters
                 }
             }
             echo "</table>";
-    
+
             // Check if soldiers were found
             if (!$soldiersFound) {
                 echo "No soldiers within the selected class found.";
