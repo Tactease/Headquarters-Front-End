@@ -1,60 +1,57 @@
 <?php
+session_start();
+include "config.php";
+require 'headquarters.php';
 
-/**
- * Laravel - A PHP Framework For Web Artisans
- *
- * @package  Laravel
- * @author   Taylor Otwell <taylor@laravel.com>
- */
+if (isset($_GET["badlogin"])) {
+    $loginError = intval($_GET["badlogin"]);
+    handle_verify_error($loginError);
+}
 
-define('LARAVEL_START', microtime(true));
+if (isset($_GET["logout"])) {
+    $logout = intval($_GET["logout"]);
+    if($logout){
+        echo "Logout successful";
+    }
+}
 
-/*
-|--------------------------------------------------------------------------
-| Register The Auto Loader
-|--------------------------------------------------------------------------
-|
-| Composer provides a convenient, automatically generated class loader for
-| our application. We just need to utilize it! We'll simply require it
-| into the script here so that we don't have to worry about manual
-| loading any of our classes later on. It feels great to relax.
-|
-*/
+if (isset($_GET["error"])) {
+    if($_GET["error"] == "noid"){
+        echo "The user must be logged in to access that page";
+    }
+}
 
-require __DIR__.'/../vendor/autoload.php';
-
-/*
-|--------------------------------------------------------------------------
-| Turn On The Lights
-|--------------------------------------------------------------------------
-|
-| We need to illuminate PHP development, so let us turn on the lights.
-| This bootstraps the framework and gets it ready for use, then it
-| will load up this application so that we can run it and send
-| the responses back to the browser and delight our users.
-|
-*/
-
-$app = require_once __DIR__.'/../bootstrap/app.php';
-
-/*
-|--------------------------------------------------------------------------
-| Run The Application
-|--------------------------------------------------------------------------
-|
-| Once we have the application, we can handle the incoming request
-| through the kernel, and send the associated response back to
-| the client's browser allowing them to enjoy the creative
-| and wonderful application we have prepared for them.
-|
-*/
-
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-
-$response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
-);
-
-$response->send();
-
-$kernel->terminate($request, $response);
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Headquarters - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="public/TactEaseLogo.png" alt="Logo" height="200">
+        </div>
+        <div class="header-main-text">
+            <h2>The Headquarters</h2>
+        </div>
+        <div class="user-avatar">
+            <img src="public/userDefault.png" alt="User Avatar" height="150">
+        </div>
+    </header>
+    <br>    
+    <h2>Login</h2>
+    <form action="mainpage.php" method="post">
+        <label for="personalNumber">Personal Number:</label><br>
+        <input type="text" id="personalNumber" name="personalNumber" maxlength="7" required><br><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" maxlength="50" required><br><br>
+        <input type="submit" class="btn btn-primary" value="Login">
+    </form>
+</body>
+</html>
