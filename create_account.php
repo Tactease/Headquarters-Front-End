@@ -69,6 +69,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <header>
+        <div class="logo">
+            <img src="public/TactEaseLogo.png" alt="Logo" height="200">
+        </div>
+        <div class="header-main-text">
+            <h2>The Headquarters</h2>
+        </div>
+        <div class="user-avatar">
+            <img src="public/userDefault.png" alt="User Avatar" height="150">
+        </div>
+    </header>
+    <div class="container">    
     <h1>Create Account</h1>
     <?php if (isset($errorMessage)) : ?>
         <p style="color: red;"><?php echo $errorMessage; ?></p>
@@ -89,5 +101,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </form>
     <br>
     <a href="<?php echo URL; ?>mainpage.php" class="btn btn-secondary">Back to main page</a><br>
+    </div>
 </body>
 </html>

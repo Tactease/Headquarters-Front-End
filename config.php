@@ -69,3 +69,9 @@ function logout() {
     session_destroy();
 
 }
+
+// Error handling settings
+ini_set('display_errors', 0); // Do not display errors
+ini_set('log_errors', 1); // Log errors
+ini_set('error_log', '/path/to/your/error.log'); // Specify the error log file
+error_reporting(E_ALL); // Report all errors

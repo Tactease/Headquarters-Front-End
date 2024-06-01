@@ -29,7 +29,7 @@ if (!$user_id_from_cookie) {
         //echo "your id is " . $_SESSION["user_id"] . " !";
     } else {
         // Authentication failed, redirect back to login page with error message
-        header("Location: login.php?badlogin=" . $loginResult);
+        header("Location: index.php?badlogin=" . $loginResult);
         exit; // Ensure that no further code is executed after the redirection
     }
 }
@@ -67,6 +67,18 @@ if(isset($_POST['classId'])){
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <header>
+        <div class="logo">
+            <img src="public/TactEaseLogo.png" alt="Logo" height="200">
+        </div>
+        <div class="header-main-text">
+            <h2>The Headquarters</h2>
+        </div>
+        <div class="user-avatar">
+            <img src="public/userDefault.png" alt="User Avatar" height="150">
+        </div>
+    </header>
+    <br>
     <!-- Show the main page -->
     <?php $hq->showMainPage();
     ?>

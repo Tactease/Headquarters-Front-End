@@ -569,7 +569,7 @@ class Headquarters
             $soldiersFound = false;
     
             // Display soldiers' information in a table
-            echo "<table>";
+            echo "<table class='styled-table'>";
             echo "<tr><th>Personal Number</th><th>Name</th></tr>";
             foreach ($soldiersCursor as $soldier) {
                 if($soldier['classId'] == $selectClassId){
@@ -596,8 +596,6 @@ class Headquarters
         echo "<a href='create_account.php' class='btn btn-primary'>Create a New Account</a><br>";
         echo "<br>";
         echo "<a href='update_class.php' class='btn btn-primary'>Update a Class</a><br>";
-        echo "<br>";
-        echo "<a href='create_account_admin.php' class='btn btn-primary'>Create a New Account - Admin</a><br>";
         echo "<br>";
         echo "<a href='update_account.php' class='btn btn-primary'>Update an Account</a><br>";
         echo "<br>";

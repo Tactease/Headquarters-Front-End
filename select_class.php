@@ -40,6 +40,18 @@ if(!isset($hq)){
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <header>
+        <div class="logo">
+            <img src="public/TactEaseLogo.png" alt="Logo" height="200">
+        </div>
+        <div class="header-main-text">
+            <h2>The Headquarters</h2>
+        </div>
+        <div class="user-avatar">
+            <img src="public/userDefault.png" alt="User Avatar" height="150">
+        </div>
+    </header>
+    <div class="container">
     <h1>Select Class</h1>
     
     <!-- Existing classes form -->
@@ -61,7 +73,7 @@ if(!isset($hq)){
         echo "<p>Class ID: {$class['classId']} - Name: {$class['className']}</p>";
     }
     ?>
-
+    </div>
     <script src="scripts.js"></script>
 </body>
 </html>
