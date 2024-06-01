@@ -1,5 +1,5 @@
 <?php
-define("URL", "http://localhost:3000/");
+define("URL", "https://tactease-hq.onrender.com/");
 
 function is_valid_id($userid){
     if(isset($userid) && $userid >= $_ENV['MIN_S_ID']){
