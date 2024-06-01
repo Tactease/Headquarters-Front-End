@@ -44,8 +44,9 @@ if (isset($_GET["error"])) {
             <img src="public/userDefault.png" alt="User Avatar" height="150">
         </div>
     </header>
-    <br>    
+    <br>
     <h2>Login</h2>
+    <div class="container">
     <form action="mainpage.php" method="post">
         <label for="personalNumber">Personal Number:</label><br>
         <input type="text" id="personalNumber" name="personalNumber" maxlength="7" required><br><br>
@@ -53,5 +54,6 @@ if (isset($_GET["error"])) {
         <input type="password" id="password" name="password" maxlength="50" required><br><br>
         <input type="submit" class="btn btn-primary" value="Login">
     </form>
+    </div>
 </body>
 </html>
