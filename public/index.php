@@ -45,8 +45,8 @@ if (isset($_GET["error"])) {
         </div>
     </header>
     <br>
-    <h2>Login</h2>
     <div class="container">
+    <h2>Login</h2>
     <form action="mainpage.php" method="post">
         <label for="personalNumber">Personal Number:</label><br>
         <input type="text" id="personalNumber" name="personalNumber" maxlength="7" required><br><br>
